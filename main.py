@@ -1,4 +1,4 @@
-import os, paramiko, threading, tls_client, random, hashlib, json
+import os, paramiko, threading, tls_client, random, hashlib, json, socket
 
 from zipfile import ZipFile
 from ftplib import FTP
@@ -44,6 +44,12 @@ class Utils:
 
 
             return iplookup
+
+
+
+
+
+
 
 
 
@@ -173,7 +179,41 @@ class Bruteforcer:
 
 
 
+
 class Exploits:
+
+
+    def port_service(port):
+        with open("Dep/Ports/common_ports.json") as f:
+            common_ports = json.load(f)
+        with open("Dep/Ports/registered_ports.json") as f:
+            registered_ports = json.load(f)
+
+
+
+        if str(port) in common_ports:
+            service = common_ports[str(port)]["service"]
+            protocol = common_ports[str(port)]["protocols"]
+
+            return service, protocol
+
+        elif str(port) in registered_ports:
+            service = registered_ports[str(port)]["service"]
+            protocol = registered_ports[str(port)]["protocols"]
+
+            return service, protocol
+        else:
+            return "No service detected", "No protocol detected"
+
+
+    def check_port(socket, ip, port):
+        con = socket.connect_ex((ip, int(port)))
+        if con == 0:
+            serv, proto = Exploits.port_service(str(port))
+            print(f"[PORT]\t\t{ip}:{str(port)}\t\t{serv}\t\t{proto}")
+
+
+
 
     def SSH_bruteforce():
         global cracked
@@ -348,6 +388,25 @@ class Exploits:
         input()
 
 
+    def Portscan():
+        ip = input("[?] Ip > ")
+        ending_port = input("[?] End port > ")
+
+        
+
+        for i in range(int(ending_port)):
+            s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            threading.Thread(target=Exploits.check_port, args=[s, ip, i + 1]).start()
+            print(f"[PROGRESS] ( {ip}:{str(i + 1)} )", end='\r')
+
+        input()
+
+
+    def Reverse_DNS():
+        ip = input("[?] Domain > ")
+        print(f"[+] {socket.gethostbyname(ip)}")
+        input()
+
 
 class SubSections:
     def Bruteforcing():
@@ -398,6 +457,11 @@ class SubSections:
         """
         print(Center.XCenter(options))
         selection = input(f"[{os.getlogin()}@Pentesting/Enumeration] : ")
+        match selection:
+            case "1":
+                Exploits.Portscan()
+            case "2":
+                Exploits.Reverse_DNS()
 
     def Debugging():
         Utils.Art()
