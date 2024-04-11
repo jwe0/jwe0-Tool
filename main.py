@@ -1,4 +1,4 @@
-import os, paramiko, threading, tls_client, random, hashlib
+import os, paramiko, threading, tls_client, random, hashlib, json
 
 from zipfile import ZipFile
 from ftplib import FTP
@@ -35,6 +35,15 @@ class Utils:
     def random_useragent():
         return random.choice([agent for agent in open("Dep/Agents.txt").read().splitlines()])
 
+
+    def load_config():
+        with open("Dep/config.json") as f:
+            configurations = json.load(f)
+
+            iplookup = configurations.get("Iplookup-Key")
+
+
+            return iplookup
 
 
 
@@ -322,6 +331,22 @@ class Exploits:
         cracked = True
 
 
+    def IP_lookup():
+        api_token = Utils.load_config()
+        ip = input("[?] IP > ")
+        session = tls_client.Session(random_tls_extension_order=True)
+        headers = {"User-Agent" : Utils.random_useragent()}
+        ipinfo = session.get("https://api.ipgeolocation.io/ipgeo?apiKey={key}&ip={ip}".format(key=api_token, ip=ip), headers=headers)
+
+        print("\n[+] Ipinfo\n")
+
+        for key, value in ipinfo.json().items():
+            if isinstance(value, str):
+                print(f"[+] {key[0].upper()}{key[1:]} <?> {value}")
+            
+
+        input()
+
 
 
 class SubSections:
@@ -360,6 +385,9 @@ class SubSections:
         """
         print(Center.XCenter(options))
         selection = input(f"[{os.getlogin()}@Pentesting/Osint] : ")
+        match selection:
+            case "1":
+                Exploits.IP_lookup()
 
     def Enumeration():
         Utils.Art()
